@@ -12,6 +12,8 @@
  * times at each station (schDep/schArr vs dep/arr fields).
  */
 
+import { getStopName } from "./static-feed.js";
+
 const AMTRAKER_URL = "https://api-v3.amtraker.com/v3/trains";
 
 // -- Types ------------------------------------------------------------------
@@ -28,6 +30,9 @@ export interface TripUpdate {
   arrivalDelaySec: number | null;
   currentDelaySec: number | null;
   trainNumber: string | null;
+  originName: string | null;
+  destinationName: string | null;
+  scheduledArrival: string | null;
 }
 
 export interface FeedSnapshot {
@@ -169,6 +174,13 @@ export async function fetchAndFilter(): Promise<void> {
       // Use trainID from Amtraker as tripId (unique per train instance)
       const tripId = train.trainID || `amtk-${trainNumber}-${dateStr}`;
 
+      // Extract origin/destination names and scheduled arrival
+      const originName = train.origName || null;
+      const destinationName = train.destName || null;
+      const scheduledArrival = lastStation.schArr
+        ? new Date(lastStation.schArr).toISOString()
+        : null;
+
       trips[tripId] = {
         tripId,
         routeId: routeSlug,
@@ -181,6 +193,9 @@ export async function fetchAndFilter(): Promise<void> {
         arrivalDelaySec,
         currentDelaySec,
         trainNumber,
+        originName,
+        destinationName,
+        scheduledArrival,
       };
       tripCount++;
     }
